@@ -165,7 +165,7 @@ const AgeVerificationPage = () => {
           >
             <option>National ID</option>
             <option>Passport</option>
-            <option>Driver's License</option>
+            <option>Driver&apos;s License</option>
           </select>
         </div>
         
