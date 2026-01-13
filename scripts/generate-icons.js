@@ -34,7 +34,8 @@ async function generateIcons() {
 
     console.log('🎉 PWA icons generated successfully!');
   } catch (error) {
-    console.error('❌ Error generating icons:', error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('❌ Error generating icons:', errorMessage);
     console.log('Creating simple placeholder icons...');
     await createSimpleIcons();
   }
@@ -66,7 +67,8 @@ async function createSimpleIcons() {
       .toFile(path.join(publicDir, 'icon-512.png'));
     console.log('✅ Created icon-512.png (placeholder)');
   } catch (error) {
-    console.error('❌ Error creating placeholder icons:', error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('❌ Error creating placeholder icons:', errorMessage);
     console.log('⚠️  Please create icon-192.png and icon-512.png manually');
   }
 }
