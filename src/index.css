@@ -1,0 +1,236 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Vending Machine PWA Design System */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+@layer base {
+  :root {
+    /* Primary Blue Theme */
+    --primary: 214 80% 55%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 214 80% 65%;
+    --primary-dark: 214 80% 45%;
+    
+    /* Background & Surfaces */
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    
+    /* Secondary & Muted */
+    --secondary: 214 20% 96%;
+    --secondary-foreground: 222 47% 11%;
+    
+    --muted: 214 20% 96%;
+    --muted-foreground: 215 16% 47%;
+    
+    /* Accent */
+    --accent: 214 80% 55%;
+    --accent-foreground: 0 0% 100%;
+    
+    /* Success / Warning / Destructive */
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    
+    --warning: 45 93% 47%;
+    --warning-foreground: 0 0% 0%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    /* Borders & Inputs */
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 214 80% 55%;
+    
+    --radius: 1rem;
+    
+    /* VM Specific */
+    --vm-header: 214 80% 55%;
+    --vm-header-foreground: 0 0% 100%;
+    --vm-cart-bar: 0 0% 100%;
+    --vm-price: 214 80% 55%;
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.1), 0 2px 4px -2px hsl(0 0% 0% / 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.1), 0 4px 6px -4px hsl(0 0% 0% / 0.1);
+    --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.1), 0 8px 10px -6px hsl(0 0% 0% / 0.1);
+  }
+
+  .dark {
+    --primary: 214 80% 60%;
+    --primary-foreground: 0 0% 100%;
+    
+    --background: 222 47% 8%;
+    --foreground: 210 40% 98%;
+    
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+    
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+    
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+    
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    
+    --accent: 214 80% 55%;
+    --accent-foreground: 0 0% 100%;
+    
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+    
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 214 80% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  body {
+    @apply bg-background text-foreground antialiased;
+    min-height: 100dvh;
+  }
+}
+
+@layer components {
+  /* VM Header */
+  .vm-header {
+    @apply bg-primary text-primary-foreground;
+    background: linear-gradient(180deg, hsl(var(--primary)) 0%, hsl(var(--primary-dark)) 100%);
+  }
+  
+  /* VM Product Card */
+  .vm-product-card {
+    @apply bg-card rounded-2xl p-4 shadow-md transition-all duration-200;
+    box-shadow: var(--shadow-md);
+  }
+  
+  .vm-product-card:active {
+    @apply scale-[0.98];
+  }
+  
+  /* VM Quantity Control */
+  .vm-qty-control {
+    @apply flex items-center gap-3 bg-secondary rounded-full px-3 py-2;
+  }
+  
+  .vm-qty-btn {
+    @apply w-8 h-8 rounded-full flex items-center justify-center text-primary font-semibold transition-colors;
+  }
+  
+  .vm-qty-btn:active {
+    @apply bg-primary/10;
+  }
+  
+  /* VM Cart Bar */
+  .vm-cart-bar {
+    @apply fixed bottom-0 left-0 right-0 bg-card px-4 py-3 shadow-xl;
+    box-shadow: 0 -4px 20px hsl(0 0% 0% / 0.1);
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+  
+  /* VM Button Variants */
+  .vm-btn-primary {
+    @apply w-full bg-primary text-primary-foreground font-semibold py-4 rounded-full transition-all duration-200;
+  }
+  
+  .vm-btn-primary:active {
+    @apply scale-[0.98] bg-primary/90;
+  }
+  
+  .vm-btn-primary:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+  
+  /* VM Payment Option */
+  .vm-payment-option {
+    @apply flex items-center gap-4 p-4 bg-card rounded-2xl border-2 border-transparent transition-all duration-200 cursor-pointer;
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .vm-payment-option.selected {
+    @apply border-primary bg-primary/5;
+  }
+  
+  /* VM Receipt */
+  .vm-receipt {
+    @apply bg-card rounded-2xl p-6 mx-4;
+    box-shadow: var(--shadow-lg);
+  }
+  
+  /* VM Status Screen */
+  .vm-status-screen {
+    @apply min-h-screen flex flex-col items-center justify-center px-6 text-center;
+  }
+  
+  /* VM Search Input */
+  .vm-search {
+    @apply w-full bg-card rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50;
+    box-shadow: var(--shadow-sm);
+  }
+  
+  /* VM Back Button */
+  .vm-back-btn {
+    @apply w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground;
+  }
+  
+  /* VM Close Button */
+  .vm-close-btn {
+    @apply w-10 h-10 rounded-full bg-destructive flex items-center justify-center text-destructive-foreground;
+  }
+  
+  /* Age Badge */
+  .vm-age-badge {
+    @apply absolute top-2 left-2 bg-destructive text-destructive-foreground text-xs font-bold px-2 py-1 rounded-full;
+  }
+  
+  /* Spinner Animation */
+  .vm-spinner {
+    @apply w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin;
+  }
+}
+
+@layer utilities {
+  /* Safe area padding */
+  .safe-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  
+  .safe-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  
+  /* Price color */
+  .text-price {
+    color: hsl(var(--vm-price));
+  }
+  
+  /* Hide scrollbar */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
