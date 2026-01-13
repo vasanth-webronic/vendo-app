@@ -61,31 +61,9 @@ if (isStaticExport) {
     }
 
     pwaConfig = withPWA(nextConfig);
-  } catch (rawError) {
-    // Safely convert any thrown value to string without throwing again
-    let errorMessage;
-    try {
-      if (rawError && typeof rawError === 'object') {
-        if ('message' in rawError && rawError.message != null) {
-          errorMessage = String(rawError.message);
-        } else {
-          // Try JSON stringify as a fallback
-          try {
-            errorMessage = JSON.stringify(rawError);
-          } catch {
-            errorMessage = String(rawError);
-          }
-        }
-      } else {
-        errorMessage = String(rawError);
-      }
-    } catch (e) {
-      // Ultimate fallback
-      errorMessage = String(e);
-    }
-
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.warn('⚠️  PWA configuration failed, continuing without PWA:', errorMessage);
-    // Continue without PWA if configuration fails
     pwaConfig = nextConfig;
   }
 }
