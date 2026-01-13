@@ -39,6 +39,10 @@ jobs:
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
+        # enablement: true will attempt to enable Pages automatically
+        # If this fails, manually enable Pages in repository Settings → Pages
+        with:
+          enablement: true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

@@ -9,17 +9,24 @@
    git push origin main
    ```
 
-2. **Enable GitHub Pages**:
+2. **Enable GitHub Actions Permissions** (if needed):
+   - Go to your repository → Settings → Actions → General
+   - Under "Workflow permissions", select **"Read and write permissions"**
+   - Check "Allow GitHub Actions to create and approve pull requests" (optional)
+   - Click Save
+
+3. **Enable GitHub Pages** (Optional - workflow will try to enable automatically):
    - Go to your repository → Settings → Pages
    - Under "Source", select **"GitHub Actions"**
    - Click Save
+   - **Note**: The workflow includes `enablement: true` which will attempt to enable Pages automatically
 
-3. **Deploy**:
+4. **Deploy**:
    - Push any commit to `main` or `master` branch
    - GitHub Actions will automatically build and deploy
    - Check the "Actions" tab to monitor deployment
 
-4. **Your site will be live at**:
+5. **Your site will be live at**:
    ```
    https://[your-username].github.io/[repository-name]/
    ```
@@ -67,6 +74,23 @@ If your repository is named `username.github.io` and you want the site at the ro
 - Verify GitHub Pages is enabled and using "GitHub Actions" source
 - Check that the workflow completed successfully
 - Wait a few minutes for DNS propagation
+
+### "Get Pages site failed" Error
+
+If you see this error:
+1. **Check Actions Permissions**:
+   - Repository → Settings → Actions → General
+   - Ensure "Read and write permissions" is selected
+   - Save changes
+
+2. **Manually Enable Pages**:
+   - Repository → Settings → Pages
+   - Source: Select "GitHub Actions"
+   - Save
+
+3. **Re-run the workflow**:
+   - Go to Actions tab
+   - Click "Re-run all jobs" on the failed workflow
 
 ### Assets Not Loading
 
