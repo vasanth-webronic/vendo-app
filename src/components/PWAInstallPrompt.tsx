@@ -13,23 +13,71 @@ export function PWAInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<string>('');
 
   useEffect(() => {
+    // Debug logging
+    const debugLog: string[] = [];
+    
     // Check if already installed
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setIsInstalled(true);
+      debugLog.push('✓ Already installed (standalone mode)');
+      setDebugInfo(debugLog.join('\n'));
       return;
     }
 
     // Check if running as standalone (iOS)
     if ((window.navigator as any).standalone === true) {
       setIsInstalled(true);
+      debugLog.push('✓ Already installed (iOS standalone)');
+      setDebugInfo(debugLog.join('\n'));
       return;
     }
+
+    // Check service worker
+    if ('serviceWorker' in navigator) {
+      debugLog.push('✓ Service Worker supported');
+    } else {
+      debugLog.push('✗ Service Worker NOT supported');
+    }
+
+    // Check manifest
+    const manifestLink = document.querySelector('link[rel="manifest"]');
+    if (manifestLink) {
+      debugLog.push(`✓ Manifest link found: ${manifestLink.getAttribute('href')}`);
+    } else {
+      debugLog.push('✗ Manifest link NOT found');
+    }
+
+    // Check icons
+    const checkIcons = async () => {
+      try {
+        const icon192 = await fetch('/icon-192.png', { method: 'HEAD' });
+        const icon512 = await fetch('/icon-512.png', { method: 'HEAD' });
+        if (icon192.ok) {
+          debugLog.push('✓ icon-192.png exists');
+        } else {
+          debugLog.push('✗ icon-192.png MISSING (404)');
+        }
+        if (icon512.ok) {
+          debugLog.push('✓ icon-512.png exists');
+        } else {
+          debugLog.push('✗ icon-512.png MISSING (404)');
+        }
+        setDebugInfo(debugLog.join('\n'));
+      } catch (e) {
+        debugLog.push('✗ Error checking icons');
+        setDebugInfo(debugLog.join('\n'));
+      }
+    };
+    checkIcons();
 
     // Listen for beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
+      debugLog.push('✓ beforeinstallprompt event received');
+      setDebugInfo(debugLog.join('\n'));
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       setShowPrompt(true);
     };
@@ -41,7 +89,22 @@ export function PWAInstallPrompt() {
       setIsInstalled(true);
       setShowPrompt(false);
       setDeferredPrompt(null);
+      debugLog.push('✓ App installed');
+      setDebugInfo(debugLog.join('\n'));
     });
+
+    // Log debug info after a delay
+    setTimeout(() => {
+      if (!deferredPrompt && !isInstalled) {
+        debugLog.push('⚠️ Install prompt not available yet');
+        debugLog.push('Common reasons:');
+        debugLog.push('1. Missing PNG icons (icon-192.png, icon-512.png)');
+        debugLog.push('2. Running in development mode (service worker disabled)');
+        debugLog.push('3. Not on HTTPS/localhost');
+        debugLog.push('4. Browser doesn\'t support PWA');
+        setDebugInfo(debugLog.join('\n'));
+      }
+    }, 2000);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -70,6 +133,15 @@ export function PWAInstallPrompt() {
 
   // Don't show if dismissed or already installed
   if (isInstalled || !showPrompt || !deferredPrompt) {
+    // Show debug info in development
+    if (process.env.NODE_ENV === 'development' && debugInfo) {
+      return (
+        <div className="fixed bottom-4 left-4 right-4 z-50 bg-yellow-100 border border-yellow-400 rounded-lg p-4 text-xs max-h-64 overflow-auto">
+          <strong>PWA Debug Info:</strong>
+          <pre className="mt-2 whitespace-pre-wrap">{debugInfo}</pre>
+        </div>
+      );
+    }
     return null;
   }
 
