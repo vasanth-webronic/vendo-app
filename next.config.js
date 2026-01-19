@@ -4,6 +4,7 @@ const repositoryName = process.env.NEXT_PUBLIC_BASE_PATH || '';
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  devIndicators:false,
   output: 'export', // Enable static export for GitHub Pages
   basePath: repositoryName, // Set base path if deploying to subdirectory
   assetPrefix: repositoryName, // Set asset prefix for static assets

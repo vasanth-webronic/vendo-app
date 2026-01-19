@@ -1,0 +1,146 @@
+{
+  "app": {
+    "name": "Vamo Store",
+    "description": "Smart vending machine store"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "continue": "Continue",
+    "back": "Back",
+    "next": "Next",
+    "close": "Close",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "retry": "Retry",
+    "viewCart": "View Cart",
+    "checkout": "Checkout"
+  },
+  "header": {
+    "title": "Vamo Store",
+    "cart": "Cart",
+    "items": "{count} items"
+  },
+  "products": {
+    "title": "Products",
+    "addToCart": "Add to Cart",
+    "outOfStock": "Out of Stock",
+    "ageRestricted": "Age Restricted (18+)",
+    "price": "Price",
+    "inStock": "In Stock",
+    "notAvailable": "Not Available"
+  },
+  "cart": {
+    "title": "Shopping Cart",
+    "empty": "Your cart is empty",
+    "emptyDescription": "Start shopping to add items to your cart",
+    "subtotal": "Subtotal",
+    "total": "Total",
+    "item": "Item",
+    "items": "Items",
+    "quantity": "Quantity",
+    "remove": "Remove",
+    "continueShop ping": "Continue Shopping",
+    "proceedToCheckout": "Proceed to Checkout"
+  },
+  "ageVerification": {
+    "title": "Age Verification Required",
+    "description": "Some items in your cart require age verification",
+    "minimumAge": "You must be {age} years or older",
+    "confirm": "I am {age} or older",
+    "decline": "I am under {age}",
+    "warning": "By confirming, you certify that you meet the age requirement"
+  },
+  "checkout": {
+    "title": "Checkout",
+    "summary": "Order Summary",
+    "items": "Items",
+    "total": "Total",
+    "proceedToPayment": "Proceed to Payment"
+  },
+  "payment": {
+    "title": "Payment",
+    "selectMethod": "Select Payment Method",
+    "methods": {
+      "razorpay": "Razorpay (UPI, Cards, Wallets)",
+      "swish": "Swish",
+      "card": "Credit/Debit Card"
+    },
+    "pay": "Pay {amount}",
+    "processing": "Processing payment...",
+    "success": "Payment successful!",
+    "failed": "Payment failed"
+  },
+  "dispensing": {
+    "title": "Dispensing",
+    "preparing": "Preparing your order...",
+    "dispensing": "Dispensing items...",
+    "complete": "Order complete!",
+    "collectItems": "Please collect your items from the vending machine",
+    "viewReceipt": "View Receipt",
+    "failed": "Dispensing failed",
+    "retry": "Retry"
+  },
+  "receipt": {
+    "title": "Receipt",
+    "orderNumber": "Order Number",
+    "date": "Date",
+    "items": "Items",
+    "subtotal": "Subtotal",
+    "total": "Total",
+    "paymentMethod": "Payment Method",
+    "status": "Status",
+    "paid": "Paid",
+    "downloadReceipt": "Download Receipt",
+    "newOrder": "New Order"
+  },
+  "errors": {
+    "NETWORK_ERROR": "Unable to connect to the service. Please check your internet connection.",
+    "VM_OFFLINE": "The vending machine is currently offline. Please try again later.",
+    "VM_DISCONNECTED": "Lost connection to the vending machine. Please wait while we reconnect...",
+    "PAYMENT_FAILED": "Payment failed. Please try again or use a different payment method.",
+    "PAYMENT_VERIFICATION_FAILED": "Payment verification failed. Please contact support.",
+    "DISPENSE_FAILED": "Failed to dispense items. Please contact support with your order number.",
+    "PRODUCT_UNAVAILABLE": "Some products are no longer available. Please review your cart.",
+    "CART_EMPTY": "Your cart is empty. Please add items before checkout.",
+    "AGE_VERIFICATION_REQUIRED": "Age verification is required for items in your cart.",
+    "INVALID_ORDER": "Invalid order. Please try again.",
+    "SESSION_EXPIRED": "Your session has expired. Please start over.",
+    "generic": "Something went wrong. Please try again."
+  },
+  "toast": {
+    "itemAdded": "Item added to cart",
+    "itemRemoved": "Item removed from cart",
+    "cartCleared": "Cart cleared",
+    "checkingConnection": "Checking vending machine status...",
+    "connectionOk": "Vending machine is online and ready",
+    "connectionFailed": "The vending machine is currently unavailable",
+    "paymentProcessing": "Processing your payment...",
+    "paymentSuccess": "Payment successful!",
+    "paymentFailed": "Payment failed. Please try again.",
+    "dispensingStarted": "Dispensing your items...",
+    "dispensingComplete": "Items dispensed successfully!",
+    "dispensingFailed": "Failed to dispense items"
+  },
+  "vmStatus": {
+    "online": "Online",
+    "offline": "Offline",
+    "checking": "Checking...",
+    "lastSeen": "Last seen {time}",
+    "connected": "Connected",
+    "disconnected": "Disconnected"
+  },
+  "validation": {
+    "required": "This field is required",
+    "invalidEmail": "Invalid email address",
+    "invalidPhone": "Invalid phone number",
+    "minLength": "Minimum length is {min} characters",
+    "maxLength": "Maximum length is {max} characters",
+    "minValue": "Minimum value is {min}",
+    "maxValue": "Maximum value is {max}"
+  }
+}

@@ -1,3 +1,4 @@
+"use client";
 // This file is kept for reference but is not used.
 // The actual page is at src/app/checkout/page.tsx
 import { Header } from '@/components/layout/Header';

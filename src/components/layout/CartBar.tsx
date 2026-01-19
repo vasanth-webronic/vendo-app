@@ -1,16 +1,24 @@
+
 import { ShoppingCart, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/lib/stores/cartStore';
 import { formatPrice } from '@/lib/utils/formatters';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useState } from 'react';
+
 
 export const CartBar = () => {
   const router = useRouter();
   const { items, getTotal, getTotalItems } = useCartStore();
   const totalItems = getTotalItems();
   const total = getTotal();
+  const [mounted, setMounted] = useState(false);
 
-  if (totalItems === 0) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted || totalItems === 0) return null;
 
   return (
     <AnimatePresence>
@@ -33,11 +41,9 @@ export const CartBar = () => {
               </span>
             </div>
           </div>
-          
           <span className="text-lg font-bold text-foreground">
             {formatPrice(total)}
           </span>
-          
           <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm">
             <ArrowRight className="w-5 h-5 text-primary" />
           </div>

@@ -1,16 +1,25 @@
-# Vamo Store - Next.js PWA
+# Vamo Store - Smart Vending Machine Store
 
-A Progressive Web App (PWA) for vending machine purchases built with Next.js, React, and TypeScript.
+A modern Progressive Web App (PWA) for vending machine purchases built with Next.js, React, and TypeScript. Features real-time VM monitoring, multi-language support, and user-friendly error handling.
 
-## Features
+## ✨ Features
 
-- 🛒 Shopping cart functionality
-- 💳 Payment processing (Swish & Card)
-- 🔞 Age verification for restricted products
-- 📦 Product dispensing simulation
-- 🧾 Digital receipts
-- 📱 Full PWA support with offline capabilities
-- 🎨 Modern UI with shadcn/ui components
+### User Experience
+- 🛒 **Shopping Cart** - Add, remove, and manage items
+- 💳 **Payment Processing** - Razorpay integration (Swish & Card coming soon)
+- 🔞 **Age Verification** - For restricted products
+- 📦 **Product Dispensing** - Real-time dispensing status
+- 🧾 **Digital Receipts** - Downloadable order receipts
+- 🌍 **Multi-Language** - English, Swedish, Hindi (extensible)
+- 📱 **PWA Support** - Install on mobile devices
+
+### Developer Experience (New! ✨)
+- 🔄 **Real-Time VM Status** - Monitor vending machine connection
+- 💬 **User-Friendly Errors** - Clear, actionable error messages
+- 🎯 **Centralized Config** - Type-safe environment & constants
+- 🛡️ **Error Boundaries** - Graceful error handling
+- 📖 **Comprehensive Docs** - Implementation guides & troubleshooting
+- 🏗️ **SOLID Principles** - Scalable, maintainable architecture
 
 ## Technologies
 
@@ -22,24 +31,41 @@ A Progressive Web App (PWA) for vending machine purchases built with Next.js, Re
 - **next-pwa** - PWA support
 - **React Query** - Data fetching
 
-## Getting Started
+## 🚀 Quick Start
+
+> **First time setup?** See [`QUICK_START.md`](QUICK_START.md) for step-by-step instructions!
 
 ### Prerequisites
 
-- Node.js 18+ and npm (or yarn/pnpm)
-- [Install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- **Node.js 18+** and npm
+- **VM Service** running (backend API)
+- Store ID and VM ID from your VM Service database
 
 ### Installation
 
-```sh
-# Install dependencies
+```bash
+# 1. Install dependencies
 npm install
 
-# Run development server
+# 2. Configure environment variables
+cp .env.example .env
+# Edit .env with your values
+
+# 3. Configure store and VM IDs (interactive)
+node scripts/setup-store.js
+
+# 4. Run development server
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Having Issues?
+
+- **Store Not Found Error?** → See [`QUICK_START.md`](QUICK_START.md)
+- **Toast Messages Not Showing?** → See [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md)
+- **Want to Understand the Code?** → See [`IMPLEMENTATION_GUIDE.md`](IMPLEMENTATION_GUIDE.md)
+- **What Changed Recently?** → See [`CHANGES_SUMMARY.md`](CHANGES_SUMMARY.md)
 
 ### Build for Production
 
@@ -94,19 +120,49 @@ This app is configured as a Progressive Web App. To complete the PWA setup:
 
 **⚠️ Install prompt won't show until PNG icons are created!** See `PWA_TROUBLESHOOTING.md` for help.
 
-## Project Structure
+## 📁 Project Structure
 
 ```
+vamo-store-main/
 ├── src/
-│   ├── app/              # Next.js App Router pages
-│   │   ├── layout.tsx   # Root layout
-│   │   ├── page.tsx     # Home page
-│   │   └── [routes]/    # Other pages
-│   ├── components/       # React components
-│   ├── lib/             # Utilities, stores, types
-│   └── pages/           # Page components (legacy, used by app router)
-├── public/              # Static assets
-└── next.config.js       # Next.js configuration
+│   ├── app/                    # Next.js App Router pages
+│   │   ├── payment/           # Payment page with VM checks ✨
+│   │   ├── dispensing/        # Dispensing page
+│   │   └── ...
+│   ├── components/
+│   │   ├── ErrorBoundary.tsx  # Error handling ✨
+│   │   ├── cart/
+│   │   ├── layout/
+│   │   └── ui/                # shadcn/ui components
+│   ├── config/                # ✨ NEW
+│   │   ├── env.ts            # Environment validation
+│   │   └── constants.ts      # App constants
+│   ├── hooks/
+│   │   └── useVMStatus.ts    # ✨ VM monitoring hook
+│   ├── i18n/                  # ✨ NEW - Translations
+│   │   ├── locales/
+│   │   │   ├── en.json       # English
+│   │   │   ├── sv.json       # Swedish
+│   │   │   └── hi.json       # Hindi
+│   │   └── request.ts
+│   ├── lib/
+│   │   ├── api/              # API services
+│   │   ├── stores/           # Zustand state
+│   │   ├── utils/
+│   │   │   ├── toast.ts      # ✨ Toast utilities
+│   │   │   └── formatters.ts
+│   │   └── types.ts
+│   └── pages/                # Page components
+├── scripts/
+│   └── setup-store.js        # ✨ Setup helper
+├── public/                    # Static assets
+├── IMPLEMENTATION_GUIDE.md   # ✨ Full technical docs
+├── TROUBLESHOOTING.md        # ✨ Problem solving
+├── CHANGES_SUMMARY.md        # ✨ What changed
+├── QUICK_START.md            # ✨ Fast setup guide
+└── next.config.js
+
+✨ = New or significantly updated
 ```
 
 ## Development
@@ -156,3 +212,90 @@ For Vercel deployment:
 1. Push your code to GitHub
 2. Import the project in Vercel
 3. Deploy automatically on every push
+
+---
+
+## 📖 Documentation
+
+Comprehensive guides are available:
+
+| Document | Description |
+|----------|-------------|
+| [`QUICK_START.md`](QUICK_START.md) | Get running in 5 minutes - fix common setup issues |
+| [`IMPLEMENTATION_GUIDE.md`](IMPLEMENTATION_GUIDE.md) | Complete technical guide - architecture, APIs, patterns |
+| [`CHANGES_SUMMARY.md`](CHANGES_SUMMARY.md) | What's new - recent improvements and migration guide |
+| [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md) | Problem solving - solutions to common issues |
+
+## 🆕 Recent Improvements
+
+**Version 1.0.0** (January 2026)
+
+✅ **VM Status Monitoring**
+- Real-time connection status checks
+- Visual indicators on payment page
+- Automatic retry on connection loss
+
+✅ **User-Friendly Error Messages**
+- No more technical jargon
+- Clear, actionable error messages
+- Toast notifications for all events
+
+✅ **Multi-Language Infrastructure**
+- Translation files for EN, SV, HI
+- Easy to add more languages
+- Ready for internationalization
+
+✅ **Centralized Configuration**
+- Type-safe environment variables
+- All constants in one place
+- Better maintainability
+
+✅ **Enhanced Payment Flow**
+- Pre-payment validation
+- Step-by-step progress toasts
+- Better error handling
+- Payment retry mechanisms
+
+✅ **Error Boundaries**
+- Graceful error handling
+- User-friendly error UI
+- Prevents app crashes
+
+See [`CHANGES_SUMMARY.md`](CHANGES_SUMMARY.md) for full details.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please follow these guidelines:
+
+1. **Code Style**
+   - Follow SOLID principles
+   - Add JSDoc comments to functions
+   - Use TypeScript types properly
+   - Follow existing naming conventions
+
+2. **Documentation**
+   - Update relevant docs
+   - Add usage examples
+   - Include troubleshooting tips
+
+3. **Testing**
+   - Test all changes locally
+   - Check error scenarios
+   - Verify error messages are user-friendly
+
+## 📝 License
+
+[Your License Here]
+
+## 🙏 Acknowledgments
+
+Built with:
+- [Next.js](https://nextjs.org/)
+- [shadcn/ui](https://ui.shadcn.com/)
+- [Zustand](https://zustand-demo.pmnd.rs/)
+- [Razorpay](https://razorpay.com/)
+- [Sonner](https://sonner.emilkowal.ski/)
+
+---
+
+**Need help?** Start with [`QUICK_START.md`](QUICK_START.md) or [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md)

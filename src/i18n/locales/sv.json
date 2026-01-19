@@ -1,0 +1,146 @@
+{
+  "app": {
+    "name": "Vamo Butik",
+    "description": "Smart varuautomat butik"
+  },
+  "common": {
+    "loading": "Laddar...",
+    "error": "Fel",
+    "success": "Framgång",
+    "cancel": "Avbryt",
+    "confirm": "Bekräfta",
+    "continue": "Fortsätt",
+    "back": "Tillbaka",
+    "next": "Nästa",
+    "close": "Stäng",
+    "save": "Spara",
+    "delete": "Radera",
+    "edit": "Redigera",
+    "retry": "Försök igen",
+    "viewCart": "Visa kundvagn",
+    "checkout": "Till kassan"
+  },
+  "header": {
+    "title": "Vamo Butik",
+    "cart": "Kundvagn",
+    "items": "{count} artiklar"
+  },
+  "products": {
+    "title": "Produkter",
+    "addToCart": "Lägg till i kundvagn",
+    "outOfStock": "Slut i lager",
+    "ageRestricted": "Åldersbegränsad (18+)",
+    "price": "Pris",
+    "inStock": "I lager",
+    "notAvailable": "Ej tillgänglig"
+  },
+  "cart": {
+    "title": "Kundvagn",
+    "empty": "Din kundvagn är tom",
+    "emptyDescription": "Börja handla för att lägga till varor i din kundvagn",
+    "subtotal": "Delsumma",
+    "total": "Totalt",
+    "item": "Vara",
+    "items": "Varor",
+    "quantity": "Antal",
+    "remove": "Ta bort",
+    "continueShopping": "Fortsätt handla",
+    "proceedToCheckout": "Gå till kassan"
+  },
+  "ageVerification": {
+    "title": "Åldersverifiering krävs",
+    "description": "Vissa varor i din kundvagn kräver åldersverifiering",
+    "minimumAge": "Du måste vara {age} år eller äldre",
+    "confirm": "Jag är {age} år eller äldre",
+    "decline": "Jag är under {age} år",
+    "warning": "Genom att bekräfta intygar du att du uppfyller ålderskravet"
+  },
+  "checkout": {
+    "title": "Kassa",
+    "summary": "Ordersammanfattning",
+    "items": "Artiklar",
+    "total": "Totalt",
+    "proceedToPayment": "Gå till betalning"
+  },
+  "payment": {
+    "title": "Betalning",
+    "selectMethod": "Välj betalningsmetod",
+    "methods": {
+      "razorpay": "Razorpay (UPI, Kort, Plånböcker)",
+      "swish": "Swish",
+      "card": "Kredit-/Betalkort"
+    },
+    "pay": "Betala {amount}",
+    "processing": "Behandlar betalning...",
+    "success": "Betalningen lyckades!",
+    "failed": "Betalningen misslyckades"
+  },
+  "dispensing": {
+    "title": "Utlämning",
+    "preparing": "Förbereder din beställning...",
+    "dispensing": "Lämnar ut varor...",
+    "complete": "Beställningen klar!",
+    "collectItems": "Hämta dina varor från varuautomaten",
+    "viewReceipt": "Visa kvitto",
+    "failed": "Utlämningen misslyckades",
+    "retry": "Försök igen"
+  },
+  "receipt": {
+    "title": "Kvitto",
+    "orderNumber": "Ordernummer",
+    "date": "Datum",
+    "items": "Artiklar",
+    "subtotal": "Delsumma",
+    "total": "Totalt",
+    "paymentMethod": "Betalningsmetod",
+    "status": "Status",
+    "paid": "Betald",
+    "downloadReceipt": "Ladda ner kvitto",
+    "newOrder": "Ny beställning"
+  },
+  "errors": {
+    "NETWORK_ERROR": "Kan inte ansluta till tjänsten. Kontrollera din internetanslutning.",
+    "VM_OFFLINE": "Varuautomaten är för närvarande offline. Försök igen senare.",
+    "VM_DISCONNECTED": "Förlorade anslutningen till varuautomaten. Vänta medan vi återansluter...",
+    "PAYMENT_FAILED": "Betalningen misslyckades. Försök igen eller använd en annan betalningsmetod.",
+    "PAYMENT_VERIFICATION_FAILED": "Betalningsverifiering misslyckades. Kontakta support.",
+    "DISPENSE_FAILED": "Misslyckades med att lämna ut varor. Kontakta support med ditt ordernummer.",
+    "PRODUCT_UNAVAILABLE": "Vissa produkter är inte längre tillgängliga. Kontrollera din kundvagn.",
+    "CART_EMPTY": "Din kundvagn är tom. Lägg till varor innan du går till kassan.",
+    "AGE_VERIFICATION_REQUIRED": "Åldersverifiering krävs för varor i din kundvagn.",
+    "INVALID_ORDER": "Ogiltig beställning. Försök igen.",
+    "SESSION_EXPIRED": "Din session har gått ut. Börja om.",
+    "generic": "Något gick fel. Försök igen."
+  },
+  "toast": {
+    "itemAdded": "Artikel tillagd i kundvagn",
+    "itemRemoved": "Artikel borttagen från kundvagn",
+    "cartCleared": "Kundvagnen tömd",
+    "checkingConnection": "Kontrollerar varuautomatens status...",
+    "connectionOk": "Varuautomaten är online och redo",
+    "connectionFailed": "Varuautomaten är för närvarande otillgänglig",
+    "paymentProcessing": "Behandlar din betalning...",
+    "paymentSuccess": "Betalningen lyckades!",
+    "paymentFailed": "Betalningen misslyckades. Försök igen.",
+    "dispensingStarted": "Lämnar ut dina varor...",
+    "dispensingComplete": "Varor utlämnade!",
+    "dispensingFailed": "Misslyckades med att lämna ut varor"
+  },
+  "vmStatus": {
+    "online": "Online",
+    "offline": "Offline",
+    "checking": "Kontrollerar...",
+    "lastSeen": "Senast sedd {time}",
+    "connected": "Ansluten",
+    "disconnected": "Frånkopplad"
+  },
+  "validation": {
+    "required": "Detta fält är obligatoriskt",
+    "invalidEmail": "Ogiltig e-postadress",
+    "invalidPhone": "Ogiltigt telefonnummer",
+    "minLength": "Minsta längd är {min} tecken",
+    "maxLength": "Maximal längd är {max} tecken",
+    "minValue": "Minimivärde är {min}",
+    "maxValue": "Maxvärde är {max}"
+  }
+}

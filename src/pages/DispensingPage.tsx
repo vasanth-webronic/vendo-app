@@ -1,3 +1,4 @@
+"use client";
 import { useState } from 'react';
 import { StatusScreen } from '@/components/ui/StatusScreen';
 import { useCartStore } from '@/lib/stores/cartStore';
