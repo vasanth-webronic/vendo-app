@@ -25,7 +25,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <Toaster />
         <Sonner />
         {children}
-        <PWAInstallPrompt />
+        {/* <PWAInstallPrompt /> */}
       </TooltipProvider>
     </QueryClientProvider>
   );
