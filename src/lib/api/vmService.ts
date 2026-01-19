@@ -51,6 +51,7 @@ export interface ConnectionStatusResponse {
 }
 
 export interface ApiError {
+  code: any;
   error: string;
   message?: string;
 }
@@ -132,6 +133,32 @@ export interface RefundRequest {
     total_price: number;
     reason: string;
   }>;
+}
+
+export interface ProductValidationItem {
+  spring_id: string;
+  selection_number: string;
+  product_name: string;
+  requested_qty: number;
+  available_qty: number;
+  spring_status: string;
+  is_available: boolean;
+  is_purchasable: boolean;
+  error_message?: string;
+}
+
+export interface PrePaymentValidationResult {
+  valid: boolean;
+  vm_connected: boolean;
+  message?: string;
+  errors?: string[];
+  product_validation?: ProductValidationItem[];
+}
+
+export interface PrePaymentValidationResponse {
+  success: boolean;
+  message: string;
+  data: PrePaymentValidationResult;
 }
 
 /**
@@ -406,6 +433,42 @@ export async function requestSpringData(
   });
 
   return handleResponse<{ success: boolean; message: string }>(response);
+}
+
+/**
+ * Validate order before payment
+ * Checks VM connection, product availability, and spring status
+ *
+ * Makes POST request with Bearer token in Authorization header.
+ * Project ID is automatically extracted from the access token.
+ *
+ * @param request - Order validation request with items
+ * @param clientId - Optional client ID for authentication (overrides env vars if provided)
+ * @param clientSecret - Optional client secret for authentication (overrides env vars if provided)
+ */
+export async function validatePrePayment(
+  request: CreateOrderRequest,
+  clientId?: string,
+  clientSecret?: string
+): Promise<PrePaymentValidationResponse> {
+  const baseUrl = getApiBaseUrl();
+  const url = `${baseUrl}/api/v1/orders/validate`;
+
+  console.log('Validating order before payment:', url);
+
+  // Get headers with Bearer token included
+  const headers = await getHeaders(clientId, clientSecret);
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(request),
+  });
+
+  const result = await handleResponse<PrePaymentValidationResponse>(response);
+  console.log('Validation result:', result);
+
+  return result;
 }
 
 /**

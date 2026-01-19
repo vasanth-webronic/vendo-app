@@ -56,48 +56,125 @@ export default function DispensingPage() {
       const failedItemsForRefund: any[] = [];
       let successCount = 0;
 
-      // Step 1: Initiate dispense process in backend
+      // Step 1: Verify order is paid before dispensing (security check)
+      console.log('Verifying order payment status before dispensing...');
+      const backendOrderCheck = await getOrder(currentOrder.id);
+
+      if (!backendOrderCheck.payment_verified) {
+        setError('Payment not verified. Cannot dispense products. Please contact support.');
+        setIsDispensing(false);
+        setPhase('ready');
+        return;
+      }
+
+      if (backendOrderCheck.order_status !== 'paid') {
+        setError(`Order is not in paid status (current: ${backendOrderCheck.order_status}). Cannot dispense.`);
+        setIsDispensing(false);
+        setPhase('ready');
+        return;
+      }
+
+      console.log('Payment verified. Proceeding with dispense...');
+
+      // Step 2: Initiate dispense process in backend
       console.log('Initiating dispense for order:', currentOrder.id);
       await initiateDispense(currentOrder.id);
 
-      // Step 2: Get the order details to get item IDs
+      // Step 3: Get the order details to get item IDs
       const backendOrder: BackendOrder = await getOrder(currentOrder.id);
-      const orderItems = backendOrder.items || [];
+      const backendOrderItems = backendOrder.items || [];
 
-      console.log('Order items from backend:', orderItems);
+      console.log('=== DEBUG: Order Details ===');
+      console.log('Backend order response:', JSON.stringify(backendOrder, null, 2));
+      console.log('Backend order items:', backendOrderItems);
+      console.log('Backend order items length:', backendOrderItems.length);
+      console.log('Cart items:', items);
+      console.log('Cart items length:', items.length);
+      console.log('Current order items:', currentOrder.items);
+      console.log('=== END DEBUG ===');
 
-      // Step 3: Dispense each product one by one
-      for (const cartItem of items) {
-        const product = cartItem.product;
+      // Validate we have backend order items
+      if (!backendOrderItems || backendOrderItems.length === 0) {
+        setError('No order items found in backend. Cannot proceed with dispense.');
+        setIsDispensing(false);
+        setPhase('ready');
+        return;
+      }
 
-        // Find matching order item from backend
-        const orderItem = orderItems.find((item: any) => item.spring_id === product.id);
-        if (!orderItem) {
-          console.error('Order item not found in backend for product:', product.id);
+      // Create a map of frontend items by productId for quick lookup
+      const frontendItemMap = new Map<string, any>();
+      (currentOrder.items || []).forEach((item: any) => {
+        const key = item.productId || item.springId || item.id;
+        if (key) {
+          // Store array of items with same productId (in case of duplicates)
+          if (!frontendItemMap.has(key)) {
+            frontendItemMap.set(key, []);
+          }
+          frontendItemMap.get(key)!.push(item);
+        }
+      });
+
+      // Step 4: Dispense each backend order item (source of truth)
+      // This ensures we process ALL items, even if same product appears multiple times
+      for (const backendOrderItem of backendOrderItems) {
+        const orderItemId = backendOrderItem.id;
+        
+        if (!orderItemId) {
+          console.error('Backend order item missing ID:', backendOrderItem);
           failedProducts.push({
-            productId: product.id,
-            name: product.name,
-            price: product.price,
-            quantity: cartItem.quantity,
-            taxRate: product.taxRate,
-            reason: 'Order item not found',
+            productId: backendOrderItem.spring_id,
+            name: backendOrderItem.product_name || 'Unknown',
+            price: backendOrderItem.unit_price || 0,
+            quantity: backendOrderItem.quantity || 0,
+            taxRate: backendOrderItem.tax_rate || 0,
+            reason: 'Backend order item missing ID',
           });
+          await updateDispenseStatus(currentOrder.id, orderItemId, 'failed', 'Backend order item missing ID');
           continue;
         }
+
+        // Find matching frontend item(s) for this backend item
+        const springId = backendOrderItem.spring_id;
+        const frontendItems = frontendItemMap.get(springId) || frontendItemMap.get(orderItemId) || [];
+        
+        // Use first matching frontend item, or fallback to backend item data
+        const frontendItem = frontendItems.length > 0 ? frontendItems.shift() : null;
+        // Find product info from backend item, frontend item, or cart items
+        const product = {
+          // Start with backend item data (most reliable)
+          id: springId,
+          productId: springId,
+          springId: springId,
+          name: backendOrderItem.product_name,
+          price: backendOrderItem.unit_price,
+          quantity: backendOrderItem.quantity,
+          taxRate: backendOrderItem.tax_rate,
+          selectionNumber: backendOrderItem.selection_number,
+          // Merge with frontend item data if available
+          ...(frontendItem || {}),
+          // Merge with cart item product data if available
+          ...(items.find((ci) => ci.product.id === springId)?.product || {}),
+        };
+        console.log('Processing order item:', {
+          orderItemId,
+          springId,
+          productName: product.name,
+          quantity: backendOrderItem.quantity,
+        });
 
         // Validate product has required fields for dispense
         if (!product.selectionNumber || !product.vmId || !product.storeId) {
           console.error('Product missing required fields:', product);
           failedProducts.push({
-            productId: product.id,
-            name: product.name,
-            price: product.price,
-            quantity: cartItem.quantity,
-            taxRate: product.taxRate,
+            productId: springId,
+            name: product.name || backendOrderItem.product_name,
+            price: product.price || backendOrderItem.unit_price,
+            quantity: backendOrderItem.quantity,
+            taxRate: product.taxRate || backendOrderItem.tax_rate,
             reason: 'Missing required product information',
           });
-          // Update backend status
-          await updateDispenseStatus(currentOrder.id, orderItem.id, 'failed', 'Missing required product information');
+          // Update backend status using order item ID
+          await updateDispenseStatus(currentOrder.id, orderItemId, 'failed', 'Missing required product information');
           continue;
         }
 
@@ -105,8 +182,9 @@ export default function DispensingPage() {
         const productStoreId = storeId || product.storeId;
         const vmId = product.vmId;
 
-        // Dispense each quantity
-        for (let i = 0; i < cartItem.quantity; i++) {
+        // Dispense each quantity unit for this order item
+        // backendOrderItem.quantity is the correct quantity to dispense
+        for (let i = 0; i < backendOrderItem.quantity; i++) {
           try {
             console.log(`Dispensing product: ${product.name} (selection: ${product.selectionNumber}, vm: ${vmId}, store: ${productStoreId})`);
 
@@ -115,15 +193,15 @@ export default function DispensingPage() {
               vmId,
               {
                 selection_number: product.selectionNumber,
-                spring_id: product.id,
+                spring_id: springId,
                 products: [{
-                  id: product.id,
-                  name: product.name,
-                  price: product.price,
+                  id: springId,
+                  name: product.name || backendOrderItem.product_name,
+                  price: product.price || backendOrderItem.unit_price,
                 }],
                 metadata: {
                   orderId: currentOrder?.id,
-                  itemId: orderItem.id,
+                  itemId: orderItemId,
                   timestamp: new Date().toISOString(),
                 },
               }
@@ -134,58 +212,58 @@ export default function DispensingPage() {
               setDispensedItems(successCount);
               setDispensedCount(successCount);
 
-              // Update backend status for success
-              await updateDispenseStatus(currentOrder.id, orderItem.id, 'success');
+              // Update backend status for success using order item ID
+              await updateDispenseStatus(currentOrder.id, orderItemId, 'success');
             } else {
               const errorMsg = response.message || 'Dispense failed';
               console.error('Dispense failed for product:', product.name, errorMsg);
 
               failedProducts.push({
-                productId: product.id,
-                name: product.name,
-                price: product.price,
+                productId: springId,
+                name: product.name || backendOrderItem.product_name,
+                price: product.price || backendOrderItem.unit_price,
                 quantity: 1,
-                taxRate: product.taxRate,
+                taxRate: product.taxRate || backendOrderItem.tax_rate,
                 reason: errorMsg,
               });
 
               failedItemsForRefund.push({
-                product_name: product.name,
-                selection_number: product.selectionNumber.toString(),
+                product_name: product.name || backendOrderItem.product_name,
+                selection_number: product.selectionNumber?.toString() || backendOrderItem.selection_number,
                 quantity: 1,
-                unit_price: product.price,
-                total_price: product.price,
+                unit_price: product.price || backendOrderItem.unit_price,
+                total_price: product.price || backendOrderItem.unit_price,
                 reason: errorMsg,
               });
 
-              // Update backend status for failure
-              await updateDispenseStatus(currentOrder.id, orderItem.id, 'failed', errorMsg);
+              // Update backend status for failure using order item ID
+              await updateDispenseStatus(currentOrder.id, orderItemId, 'failed', errorMsg);
             }
           } catch (dispenseError) {
             const errorMsg = dispenseError instanceof Error ? dispenseError.message : 'Unknown error';
             console.error('Error dispensing product:', product.name, dispenseError);
 
             failedProducts.push({
-              productId: product.id,
-              name: product.name,
-              price: product.price,
+              productId: springId,
+              name: product.name || backendOrderItem.product_name,
+              price: product.price || backendOrderItem.unit_price,
               quantity: 1,
-              taxRate: product.taxRate,
+              taxRate: product.taxRate || backendOrderItem.tax_rate,
               reason: errorMsg,
             });
 
             failedItemsForRefund.push({
-              product_name: product.name,
-              selection_number: product.selectionNumber.toString(),
+              product_name: product.name || backendOrderItem.product_name,
+              selection_number: product.selectionNumber?.toString() || backendOrderItem.selection_number,
               quantity: 1,
-              unit_price: product.price,
-              total_price: product.price,
+              unit_price: product.price || backendOrderItem.unit_price,
+              total_price: product.price || backendOrderItem.unit_price,
               reason: errorMsg,
             });
 
-            // Update backend status for failure
+            // Update backend status for failure using order item ID
             try {
-              await updateDispenseStatus(currentOrder.id, orderItem.id, 'failed', errorMsg);
+              await updateDispenseStatus(currentOrder.id, orderItemId, 'failed', errorMsg);
             } catch (statusError) {
               console.error('Failed to update dispense status:', statusError);
             }
@@ -193,12 +271,16 @@ export default function DispensingPage() {
         }
       }
 
-      // Step 4: Complete dispense process
+      // Step 5: Complete dispense process
       console.log('Completing dispense process...');
       const completeResult = await completeDispense(currentOrder.id);
       console.log('Dispense completed:', completeResult);
+      if(completeResult.data.order_status != "failed"){
+            clearCart();
+      }
 
-      // Step 5: Handle refunds for failed items
+      
+      // Step 6: Handle refunds for failed items
       if (failedItemsForRefund.length > 0) {
         const refundAmount = failedItemsForRefund.reduce(
           (sum, item) => sum + item.total_price,
@@ -326,12 +408,44 @@ export default function DispensingPage() {
 
   // Dispensing
   if (phase === 'dispensing') {
+    const progress = totalItems > 0 ? Math.round((dispensedItems / totalItems) * 100) : 0;
+
     return (
-      <StatusScreen
-        showSpinner
-        title={`Dispensing... ${dispensedItems}/${totalItems}`}
-        description="Please do not go back or close the app while the Products are dispensing"
-      />
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 text-center">
+        {/* Spinner */}
+        <div className="w-20 h-20 border-4 border-primary border-t-transparent rounded-full animate-spin mb-8"></div>
+
+        {/* Title */}
+        <h1 className="text-2xl font-bold text-foreground mb-2">
+          Dispensing Products
+        </h1>
+
+        {/* Progress Count */}
+        <p className="text-4xl font-bold text-primary mb-4">
+          {dispensedItems} / {totalItems}
+        </p>
+
+        {/* Progress Bar */}
+        <div className="w-full max-w-md h-3 bg-secondary rounded-full overflow-hidden mb-4">
+          <div
+            className="h-full bg-primary transition-all duration-500 ease-out"
+            style={{ width: `${progress}%` }}
+          ></div>
+        </div>
+
+        {/* Progress Percentage */}
+        <p className="text-lg text-muted-foreground mb-8">
+          {progress}% Complete
+        </p>
+
+        {/* Warning */}
+        <div className="flex items-center gap-3 p-4 bg-warning/10 rounded-2xl max-w-md">
+          <AlertCircle className="w-6 h-6 text-warning flex-shrink-0" />
+          <p className="text-sm text-foreground">
+            Please do not go back or close the app while products are dispensing
+          </p>
+        </div>
+      </div>
     );
   }
 
@@ -405,24 +519,61 @@ export default function DispensingPage() {
 
   // Complete success
   return (
-    <StatusScreen
-      icon={Package}
-      iconColor="success"
-      title="Purchase Complete!"
-      description="Thank you for shopping with us!"
-    >
-      <button onClick={handleComplete} className="vm-btn-primary">
-        View Receipt
-      </button>
-      <button
-        onClick={() => {
-          clearCart();
-          router.push('/');
-        }}
-        className="w-full py-3 text-primary font-medium"
-      >
-        Done
-      </button>
-    </StatusScreen>
+    <div className="min-h-screen bg-background flex flex-col">
+      <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
+        {/* Success Icon */}
+        <div className="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center mb-6">
+          <Package className="w-12 h-12 text-green-600" />
+        </div>
+
+        {/* Title */}
+        <h1 className="text-2xl font-bold text-foreground mb-2">
+          Purchase Complete!
+        </h1>
+
+        {/* Products Dispensed Count */}
+        <div className="my-6">
+          <p className="text-muted-foreground mb-2">Products Dispensed</p>
+          <p className="text-5xl font-bold text-green-600">
+            {dispensedItems}
+          </p>
+        </div>
+
+        <p className="text-muted-foreground mb-8">
+          Thank you for shopping with us!
+        </p>
+
+        {/* Product List Summary */}
+        {items.length > 0 && (
+          <div className="w-full max-w-md bg-card rounded-2xl p-4 mb-6 shadow-sm">
+            <h3 className="text-sm font-semibold text-muted-foreground mb-3">
+              Dispensed Products
+            </h3>
+            {items.map((item, index) => (
+              <div key={index} className="flex justify-between items-center py-2 border-b border-border last:border-b-0">
+                <span className="text-foreground">{item.product.name}</span>
+                <span className="text-primary font-medium">x{item.quantity}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Buttons */}
+      <div className="p-4 space-y-3 safe-bottom">
+        <button onClick={handleComplete} className="vm-btn-primary">
+          View Receipt
+        </button>
+        <button
+          onClick={() => {
+            clearCart();
+            router.push('/');
+          }}
+          className="w-full py-3 text-primary font-medium"
+        >
+          Done
+        </button>
+      </div>
+    </div>
   );
 }

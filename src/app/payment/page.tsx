@@ -13,6 +13,7 @@ import {
   createOrder,
   createRazorpayOrder,
   verifyPayment,
+  validatePrePayment,
   type CreateOrderRequest,
   type OrderItem,
 } from '@/lib/api/vmService';
@@ -66,7 +67,7 @@ export default function PaymentPage() {
 
       console.log('Creating order for store:', storeId, 'VM:', vmId);
 
-      // Step 1: Create order in backend
+      // Prepare order items
       const orderItems: OrderItem[] = items.map((item) => ({
         spring_id: item.product.id,
         selection_number: item.product.selectionNumber?.toString() || '0',
@@ -84,22 +85,50 @@ export default function PaymentPage() {
         },
       };
 
+      // Step 1: Validate order before payment
+      console.log('Validating order before payment...');
+      const validationResult = await validatePrePayment(createOrderRequest);
+
+
+
+      console.log('Validated report:',validationResult);
+
+      if (!validationResult.data.valid) {
+        // Show validation errors to user
+        const errorMessage = validationResult.data.message || 'Order validation failed';
+        const detailedErrors = validationResult.data.errors?.join(', ') || errorMessage;
+
+        setError(detailedErrors);
+        setIsLoading(false);
+        return;
+      }
+
+      // Check VM connection status specifically
+      if (!validationResult.data.vm_connected) {
+        setError('Vending machine is not connected. Please try again later.');
+        setIsLoading(false);
+        return;
+      }
+
+      console.log('Order validation passed. Proceeding to create order...');
+
+      // Step 2: Create order in backend
       const orderResponse = await createOrder(createOrderRequest);
       console.log('Order created:', orderResponse.data);
 
       // Handle different payment methods
       if (selectedPaymentMethod === 'razorpay') {
-        // Step 2: Create Razorpay order
+        // Step 3: Create Razorpay order
         const razorpayOrderResponse = await createRazorpayOrder(orderResponse.data.id);
         console.log('Razorpay order created:', razorpayOrderResponse);
 
-        // Step 3: Get Razorpay key from environment
+        // Step 4: Get Razorpay key from environment
         const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
         if (!razorpayKey) {
           throw new Error('Razorpay key not configured. Please add NEXT_PUBLIC_RAZORPAY_KEY_ID to environment variables.');
         }
 
-        // Step 4: Open Razorpay checkout
+        // Step 5: Open Razorpay checkout
       const options = {
         key: razorpayKey,
         amount: razorpayOrderResponse.amount, // Amount in paise
@@ -111,7 +140,7 @@ export default function PaymentPage() {
           try {
             console.log('Payment successful, verifying...', response);
 
-            // Step 5: Verify payment
+            // Step 6: Verify payment
             const verifyResponse = await verifyPayment({
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
@@ -139,7 +168,7 @@ export default function PaymentPage() {
             });
 
             // Clear cart
-            clearCart();
+            // clearCart();
 
             // Navigate to dispensing page
             setIsLoading(false);
