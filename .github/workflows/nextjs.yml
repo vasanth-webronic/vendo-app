@@ -55,12 +55,8 @@ jobs:
           cache: ${{ steps.detect-package-manager.outputs.manager }}
       - name: Setup Pages
         uses: actions/configure-pages@v5
-        with:
-          # Automatically inject basePath in your Next.js configuration file and disable
-          # server side image optimization (https://nextjs.org/docs/api-reference/next/image#unoptimized).
-          #
-          # You may remove this line if you want to manage the configuration yourself.
-          static_site_generator: next
+        # Note: We manage next.config.js manually to avoid conflicts with next-pwa
+        # The static_site_generator option would auto-modify next.config.js which causes issues
       - name: Restore cache
         uses: actions/cache@v4
         with:
@@ -73,8 +69,28 @@ jobs:
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
       - name: Install dependencies
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
+      - name: Debug environment
+        run: |
+          echo "Repository name: ${{ github.event.repository.name }}"
+          echo "NEXT_PUBLIC_BASE_PATH will be: /${{ github.event.repository.name }}"
+          echo "Node version: $(node --version)"
+          echo "NPM version: $(npm --version)"
+          echo "Working directory: $(pwd)"
+          echo "Next.config.js exists: $(test -f next.config.js && echo 'yes' || echo 'no')"
       - name: Build with Next.js
+        env:
+          NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
+      - name: Verify build output
+        run: |
+          if [ ! -d "out" ]; then
+            echo "❌ Error: Build output directory 'out' not found!"
+            exit 1
+          fi
+          echo "✅ Build output directory exists"
+          echo "📊 Build summary:"
+          ls -la out/ | head -20
+          echo "Total HTML files: $(find out -name '*.html' | wc -l)"
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
