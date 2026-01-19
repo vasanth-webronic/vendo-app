@@ -3,9 +3,10 @@ import { persist } from 'zustand/middleware';
 import { AgeVerification, Order, PaymentMethod } from '../types';
 
 interface AppState {
-  // Store ID
+  // Store ID (from URL params, stored in Zustand for use throughout the app)
   storeId: string | null;
   setStoreId: (id: string) => void;
+  getStoreId: () => string | null;
   
   // Age Verification
   ageVerification: AgeVerification;
@@ -33,10 +34,16 @@ interface AppState {
 
 export const useAppStore = create<AppState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       // Store ID
       storeId: null,
-      setStoreId: (id) => set({ storeId: id }),
+      setStoreId: (id) => {
+        console.log('Setting store ID in store:', id);
+        set({ storeId: id });
+      },
+      getStoreId: () => {
+        return get().storeId;
+      },
       
       // Age Verification
       ageVerification: { status: 'none' },

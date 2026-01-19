@@ -1,4 +1,4 @@
-import { CreditCard, Smartphone, Check } from 'lucide-react';
+import { CreditCard, Smartphone, Check, Wallet } from 'lucide-react';
 import { PaymentMethod } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
@@ -11,11 +11,13 @@ interface PaymentOptionProps {
 const paymentIcons = {
   swish: Smartphone,
   card: CreditCard,
+  razorpay: Wallet,
 };
 
 const paymentLabels = {
   swish: 'Swish',
   card: 'Card',
+  razorpay: 'Razorpay (UPI, Cards, Net Banking)',
 };
 
 export const PaymentOption = ({ method, selected, onSelect }: PaymentOptionProps) => {

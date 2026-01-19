@@ -5,59 +5,275 @@ import { useRouter } from 'next/navigation';
 import { StatusScreen } from '@/components/ui/StatusScreen';
 import { useCartStore } from '@/lib/stores/cartStore';
 import { useAppStore } from '@/lib/stores/appStore';
+import {
+  dispenseProduct,
+  initiateDispense,
+  updateDispenseStatus,
+  completeDispense,
+  createRefund,
+  processRefund,
+  getOrder,
+  type Order as BackendOrder,
+} from '@/lib/api/vmService';
 import { AlertCircle, Package } from 'lucide-react';
 
 export default function DispensingPage() {
   const router = useRouter();
   const { items, getTotalItems, clearCart } = useCartStore();
-  const { currentOrder, setCurrentOrder, setIsDispensing, setDispensedCount } = useAppStore();
+  const { 
+    storeId, 
+    currentOrder, 
+    setCurrentOrder, 
+    setIsDispensing, 
+    setDispensedCount 
+  } = useAppStore();
   const [phase, setPhase] = useState<'ready' | 'dispensing' | 'complete' | 'partial'>('ready');
   const [dispensedItems, setDispensedItems] = useState(0);
+  const [failedItems, setFailedItems] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const totalItems = getTotalItems();
 
-  const handleCollect = () => {
+  const handleCollect = async () => {
+    // Validate store ID
+    if (!storeId) {
+      setError('Store ID is missing. Please go back and try again.');
+      return;
+    }
+
+    // Validate we have an order ID
+    if (!currentOrder?.id) {
+      setError('Order information missing. Please go back and try the payment again.');
+      return;
+    }
+
     setPhase('dispensing');
     setIsDispensing(true);
-    
-    // Simulate dispensing products one by one
-    let count = 0;
-    const interval = setInterval(() => {
-      count++;
-      setDispensedItems(count);
-      setDispensedCount(count);
-      
-      if (count >= totalItems) {
-        clearInterval(interval);
-        
-        // 90% chance all products dispense successfully
-        if (Math.random() > 0.1) {
-          setPhase('complete');
-          if (currentOrder) {
-            setCurrentOrder({ ...currentOrder, dispensed: true });
+    setError(null);
+    setFailedItems([]);
+
+    try {
+      const failedProducts: any[] = [];
+      const failedItemsForRefund: any[] = [];
+      let successCount = 0;
+
+      // Step 1: Initiate dispense process in backend
+      console.log('Initiating dispense for order:', currentOrder.id);
+      await initiateDispense(currentOrder.id);
+
+      // Step 2: Get the order details to get item IDs
+      const backendOrder: BackendOrder = await getOrder(currentOrder.id);
+      const orderItems = backendOrder.items || [];
+
+      console.log('Order items from backend:', orderItems);
+
+      // Step 3: Dispense each product one by one
+      for (const cartItem of items) {
+        const product = cartItem.product;
+
+        // Find matching order item from backend
+        const orderItem = orderItems.find((item: any) => item.spring_id === product.id);
+        if (!orderItem) {
+          console.error('Order item not found in backend for product:', product.id);
+          failedProducts.push({
+            productId: product.id,
+            name: product.name,
+            price: product.price,
+            quantity: cartItem.quantity,
+            taxRate: product.taxRate,
+            reason: 'Order item not found',
+          });
+          continue;
+        }
+
+        // Validate product has required fields for dispense
+        if (!product.selectionNumber || !product.vmId || !product.storeId) {
+          console.error('Product missing required fields:', product);
+          failedProducts.push({
+            productId: product.id,
+            name: product.name,
+            price: product.price,
+            quantity: cartItem.quantity,
+            taxRate: product.taxRate,
+            reason: 'Missing required product information',
+          });
+          // Update backend status
+          await updateDispenseStatus(currentOrder.id, orderItem.id, 'failed', 'Missing required product information');
+          continue;
+        }
+
+        // Use storeId from store (Zustand) - it's the source of truth
+        const productStoreId = storeId || product.storeId;
+        const vmId = product.vmId;
+
+        // Dispense each quantity
+        for (let i = 0; i < cartItem.quantity; i++) {
+          try {
+            console.log(`Dispensing product: ${product.name} (selection: ${product.selectionNumber}, vm: ${vmId}, store: ${productStoreId})`);
+
+            const response = await dispenseProduct(
+              productStoreId,
+              vmId,
+              {
+                selection_number: product.selectionNumber,
+                spring_id: product.id,
+                products: [{
+                  id: product.id,
+                  name: product.name,
+                  price: product.price,
+                }],
+                metadata: {
+                  orderId: currentOrder?.id,
+                  itemId: orderItem.id,
+                  timestamp: new Date().toISOString(),
+                },
+              }
+            );
+
+            if (response.success) {
+              successCount++;
+              setDispensedItems(successCount);
+              setDispensedCount(successCount);
+
+              // Update backend status for success
+              await updateDispenseStatus(currentOrder.id, orderItem.id, 'success');
+            } else {
+              const errorMsg = response.message || 'Dispense failed';
+              console.error('Dispense failed for product:', product.name, errorMsg);
+
+              failedProducts.push({
+                productId: product.id,
+                name: product.name,
+                price: product.price,
+                quantity: 1,
+                taxRate: product.taxRate,
+                reason: errorMsg,
+              });
+
+              failedItemsForRefund.push({
+                product_name: product.name,
+                selection_number: product.selectionNumber.toString(),
+                quantity: 1,
+                unit_price: product.price,
+                total_price: product.price,
+                reason: errorMsg,
+              });
+
+              // Update backend status for failure
+              await updateDispenseStatus(currentOrder.id, orderItem.id, 'failed', errorMsg);
+            }
+          } catch (dispenseError) {
+            const errorMsg = dispenseError instanceof Error ? dispenseError.message : 'Unknown error';
+            console.error('Error dispensing product:', product.name, dispenseError);
+
+            failedProducts.push({
+              productId: product.id,
+              name: product.name,
+              price: product.price,
+              quantity: 1,
+              taxRate: product.taxRate,
+              reason: errorMsg,
+            });
+
+            failedItemsForRefund.push({
+              product_name: product.name,
+              selection_number: product.selectionNumber.toString(),
+              quantity: 1,
+              unit_price: product.price,
+              total_price: product.price,
+              reason: errorMsg,
+            });
+
+            // Update backend status for failure
+            try {
+              await updateDispenseStatus(currentOrder.id, orderItem.id, 'failed', errorMsg);
+            } catch (statusError) {
+              console.error('Failed to update dispense status:', statusError);
+            }
           }
-        } else {
-          // Simulate partial dispensing failure
-          setPhase('partial');
+        }
+      }
+
+      // Step 4: Complete dispense process
+      console.log('Completing dispense process...');
+      const completeResult = await completeDispense(currentOrder.id);
+      console.log('Dispense completed:', completeResult);
+
+      // Step 5: Handle refunds for failed items
+      if (failedItemsForRefund.length > 0) {
+        const refundAmount = failedItemsForRefund.reduce(
+          (sum, item) => sum + item.total_price,
+          0
+        );
+
+        console.log('Creating refund for failed items:', failedItemsForRefund);
+
+        try {
+          const refundResult = await createRefund(currentOrder.id, {
+            refund_amount: refundAmount,
+            refund_reason: 'Product dispense failed',
+            refund_type: 'failed_dispense',
+            failed_items: failedItemsForRefund,
+          });
+
+          console.log('Refund created:', refundResult);
+
+          // Process the refund via Razorpay
+          const processResult = await processRefund(refundResult.data.id);
+          console.log('Refund processed:', processResult);
+
+          // Store refund info in order
           if (currentOrder) {
             setCurrentOrder({
               ...currentOrder,
               dispensed: true,
-              refundItems: [items[0]?.product ? {
-                productId: items[0].product.id,
-                name: items[0].product.name,
-                price: items[0].product.price,
-                quantity: 1,
-                taxRate: items[0].product.taxRate,
-              } : null].filter(Boolean) as any,
-              refundAmount: items[0]?.product.price || 0,
-              refundId: `REF-${Date.now()}`,
+              refundItems: failedProducts,
+              refundAmount,
+              refundId: refundResult.data.refund_number,
             });
           }
+        } catch (refundError) {
+          console.error('Failed to process refund:', refundError);
+          // Continue anyway - refund can be processed manually
         }
-        
-        setIsDispensing(false);
       }
-    }, 1000);
+
+      setIsDispensing(false);
+
+      // Check results
+      if (failedProducts.length === 0) {
+        // All products dispensed successfully
+        setPhase('complete');
+        if (currentOrder) {
+          setCurrentOrder({ ...currentOrder, dispensed: true });
+        }
+      } else if (successCount > 0) {
+        // Partial success
+        setPhase('partial');
+        setFailedItems(failedProducts);
+        const refundAmount = failedProducts.reduce(
+          (sum, item) => sum + item.price * item.quantity,
+          0
+        );
+        if (currentOrder) {
+          setCurrentOrder({
+            ...currentOrder,
+            dispensed: true,
+            refundItems: failedProducts,
+            refundAmount,
+            refundId: `REF-${Date.now()}`,
+          });
+        }
+      } else {
+        // All failed
+        setError('Failed to dispense products. Please contact support.');
+        setPhase('ready');
+      }
+    } catch (error) {
+      console.error('Dispense error:', error);
+      setError(error instanceof Error ? error.message : 'Failed to dispense products');
+      setIsDispensing(false);
+      setPhase('ready');
+    }
   };
 
   const handleProceed = () => {
@@ -119,8 +335,25 @@ export default function DispensingPage() {
     );
   }
 
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
+          <AlertCircle className="w-16 h-16 text-destructive mb-4" />
+          <h2 className="text-xl font-bold text-foreground mb-2">Error</h2>
+          <p className="text-muted-foreground mb-4">{error}</p>
+          <button onClick={() => router.push('/')} className="vm-btn-primary">
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Partial failure - some products not dispensed
-  if (phase === 'partial' && currentOrder?.refundItems) {
+  if (phase === 'partial' && (currentOrder?.refundItems || failedItems.length > 0)) {
+    const refundItems = currentOrder?.refundItems || failedItems;
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <div className="flex-1 p-6">
@@ -130,13 +363,16 @@ export default function DispensingPage() {
           
           {/* Failed Items */}
           <div className="bg-card rounded-2xl p-4 shadow-sm mb-6">
-            {currentOrder.refundItems.map((item, index) => (
-              <div key={index} className="flex items-center justify-between">
+            {refundItems.map((item, index) => (
+              <div key={index} className="flex items-center justify-between mb-3 last:mb-0">
                 <div>
                   <p className="font-semibold text-foreground">{item.name}</p>
                   <p className="text-sm text-muted-foreground">
                     {item.price} SEK x{item.quantity}
                   </p>
+                  {item.reason && (
+                    <p className="text-xs text-destructive mt-1">{item.reason}</p>
+                  )}
                 </div>
               </div>
             ))}

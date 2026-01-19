@@ -8,6 +8,14 @@ export interface Product {
   isAgeRestricted: boolean;
   taxRate: number; // percentage
   depositAmount?: number; // pant
+  // Additional fields from spring data (optional, added when fetched from API)
+  selectionNumber?: number;
+  inventory?: number;
+  capacity?: number;
+  springStatus?: string;
+  stripeCode?: string;
+  vmId?: string;
+  storeId?: string;
 }
 
 // Cart Types
@@ -17,7 +25,7 @@ export interface CartItem {
 }
 
 // Order Types
-export type PaymentMethod = 'swish' | 'card';
+export type PaymentMethod = 'swish' | 'card' | 'razorpay';
 
 export interface OrderItem {
   productId: string;
